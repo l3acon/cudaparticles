@@ -17,7 +17,7 @@ all:	$(TARGETS)
 
 serial: serial.o common.o
 	$(CC) -o $@ $(LIBS) serial.o common.o
-gpu: gpu.o common.o
+gpu: gpu1.o common.o
 	$(CC) $(NVCCFLAGS) -o $@ gpu.o common.o $(NVCCLIBS)
 autograder: autograder.o common.o
 	$(CC) -o $@ $(LIBS) autograder.o common.o
@@ -26,8 +26,8 @@ serial.o: serial.cu common.h
 	$(CC) -c $(CFLAGS) serial.cu
 autograder.o: autograder.cu common.h
 	$(CC) -c $(CFLAGS) autograder.cu
-gpu.o: gpu.cu common.h
-	$(CC) -c $(NVCCFLAGS) gpu.cu
+gpu1.o: gpu1.cu common.h
+	$(CC) -c $(NVCCFLAGS) gpu1.cu
 common.o: common.cu common.h
 	$(CC) -c $(CFLAGS) common.cu
 
