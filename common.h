@@ -38,7 +38,7 @@ double read_timer( );
 //  simulation routines 
 // 
  
-void set_size( int n ); 
+int set_size( int n ); 
 void init_particles( int n, particle_t *p ); 
 void apply_force( particle_t &particle, particle_t &neighbor ); 
 void move( particle_t &p ); 
