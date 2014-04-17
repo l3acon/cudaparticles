@@ -11,7 +11,7 @@ CFLAGS = -O3 -arch=compute_20 -code=sm_20
 NVCCFLAGS = -O3 $(CUDAINC) -arch=compute_20 -code=sm_20
 LIBS = 
 
-TARGETS = serial gpu1 autograder
+TARGETS = serial autograder gpu1
 
 all:	$(TARGETS)
 
