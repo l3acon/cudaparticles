@@ -174,7 +174,7 @@ __global__ void moveParticles (particle_t * particles, int n, double size)
 }
 
 //	called for all PARTICLES
-__global__ void updateBins( particle_t *particles, int n )
+__global__ void updateBins( particle_t *particles, int side, int n )
 {
 	extern __shared__ int binCounters[];
 	extern __shared__ particle_t* particlesInBin[];
@@ -188,13 +188,13 @@ __global__ void updateBins( particle_t *particles, int n )
 		return;
 	
 	int2 bi = calBin(particles[tid].x, particles[tid].y);	//	calculate bin index
-	atomicAdd(&binCounters[bi.x*bi.y],1);
-	if(binCounters[bi.x*bi.y] >= MPPB || particlesInBin[binCounters[bi.x*bi.y]] != 0)
+	atomicAdd(&binCounters[bi.x+side*bi.y],1);
+	if(binCounters[bi.x*bi.y] >= MPPB || particlesInBin[binCounters[bi.x+side*bi.y]] != 0)
 		return;	//	probably do something else for this error
 
 	//	add our particle index to the bin	
 	//	NOTE: this whole thing might need to be atomic?
-	particlesInBin[binCounters[bi.x*bi.y]] = &particles[tid];
+	particlesInBin[binCounters[bi.x+side*bi.y]] = &particles[tid];
 }
 
 int main( int argc, char **argv )
@@ -250,7 +250,7 @@ int main( int argc, char **argv )
 		
 		//	for all particles
 		//initBins<<< pblks, NUM_THREADS >>> (n);
-		updateBins<<< pblks, NUM_THREADS >>>(d_particles, n);
+		updateBins<<< pblks, NUM_THREADS >>>(d_particles, side, n);
     copy_time = read_timer( ) - copy_time;
 		for( int step = 0; step < NSTEPS; step++ )
 		{
@@ -266,7 +266,7 @@ int main( int argc, char **argv )
 			clearBins<<<blks, NUM_THREADS >>>(n);
 
 			cudaThreadSynchronize();
-			updateBins<<< blks, NUM_THREADS >>> (d_particles, n);
+			updateBins<<< blks, NUM_THREADS >>> (d_particles, side, n);
      	
 			//
       //  save if necessary
