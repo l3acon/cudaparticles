@@ -7,7 +7,7 @@ CUDAINC = -I$(CUDADIR)/include
 NVCCLIBS = -L$(CUDADIR)/lib64 -Xlinker -rpath -Xlinker /usr/local/cuda/lib64
 
 CC = $(CUDADIR)/bin/nvcc
-CFLAGS = -O3 -arch=compute_20 -code=sm_20
+CFLAGS = -g -G -O3 -arch=compute_20 -code=sm_20
 NVCCFLAGS = -O3 $(CUDAINC) -arch=compute_20 -code=sm_20
 LIBS = 
 
