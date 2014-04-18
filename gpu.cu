@@ -239,7 +239,7 @@ int main( int argc, char **argv )
 		//	allocate device memory
     cudaMalloc( (void **) &d_particles, n * sizeof(particle_t));
 		cudaMalloc( (int **) &binCounters, n*sizeof(int));
-		cudaMalloc( (void **) &particlesInBin, n*MPPB*sizeof(particle_t*));
+		cudaMalloc( (void **) &particlesInBin, n*MPPB*sizeof(&h_binCounters[0]));
 
 		//	only the particles need to be copied to the device
 		cudaMemcpy(d_particles, particles, n * sizeof(particle_t), cudaMemcpyHostToDevice);
