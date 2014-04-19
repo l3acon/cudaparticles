@@ -56,13 +56,13 @@ __device__ void applyForce(particle_t &particle, particle_t &neighbor)
 //	int* unused = (int*) numParticlesInBin[n*MPPB]; 
 //}
 
-__global__ void clearBins(int n)
+__global__ void clearBins(int numBins)
 {
 	extern __shared__ int binCounters[];
 	extern __shared__ particle_t* particlesInBin[];
 
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if(tid >= n) return;
+  if(tid >= numBins) return;
 	binCounters[tid] = 0;
 	for(int i = 0; i < MPPB; ++i)
 		particlesInBin[tid*MPPB+i] = 0;	//	not using NULL, maybe should
@@ -78,7 +78,7 @@ __global__ void binCollide(int side, int n)
 
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   	
-	if(tid >= n) 
+	if(tid >= side*side) 
 		return;
 	
 	int pITB = binCounters[tid];
@@ -220,33 +220,37 @@ int main( int argc, char **argv )
     FILE *fsave = savename ? fopen( savename, "w" ) : NULL;
     FILE *fsum = sumname ? fopen(sumname,"a") : NULL;
     particle_t *particles = (particle_t*) malloc( n * sizeof(particle_t) );
-		//	need to get number of bins somehow?
+
+		//	there are side*side number of bins	
 		int side = set_size( n );
+		int numBins = side*side;
 
 		// GPU particle data structure
     particle_t * d_particles;
 
-		//	//	number of particles in each bin
-		//	initialilzed to zero inbetween each step
-		int h_binCounters [n];
-		int * binCounters;
+		
 		double copy_time = read_timer( );
+		
 		//	indicies of each particle in a particular bin
 		//	only has room for MAX_PARTIVLES_PER_BIN
-		particle_t h_particlesInBin[n*MPPB] ;
+		particle_t h_particlesInBin[numBins*MPPB] ;
 		particle_t *particlesInBin;
-
+		
+		//	//	number of particles in each bin
+		//	initialilzed to zero inbetween each step
+		int h_binCounters [numBins];
+		int * binCounters;
 		//	allocate device memory
     cudaMalloc( (void **) &d_particles, n * sizeof(particle_t));
-		cudaMalloc( (int **) &binCounters, n*sizeof(int));
-		cudaMalloc( (void **) &particlesInBin, n*MPPB*sizeof(&h_binCounters[0]));
+		cudaMalloc( (void **) &binCounters, numBins*sizeof(int));
+		cudaMalloc( (void **) &particlesInBin, numBins*MPPB*sizeof(&h_binCounters[0]));
 
 		//	only the particles need to be copied to the device
 		cudaMemcpy(d_particles, particles, n * sizeof(particle_t), cudaMemcpyHostToDevice);
 		cudaThreadSynchronize();
 
 		int pblks = (n + NUM_THREADS - 1) / NUM_THREADS;
-		int blks = ( + NUM_THREADS -1) / NUM_THREADS;
+		int blks = (numBins + NUM_THREADS -1) / NUM_THREADS;
 		
 		//	for all particles
 		//initBins<<< pblks, NUM_THREADS >>> (n);
@@ -263,7 +267,7 @@ int main( int argc, char **argv )
 			cudaThreadSynchronize();
 			
 			//	for all bins
-			clearBins<<<blks, NUM_THREADS >>>(n);
+			clearBins<<<blks, NUM_THREADS >>>(numBins);
 
 			cudaThreadSynchronize();
 			updateBins<<< blks, NUM_THREADS >>> (d_particles, side, n);
