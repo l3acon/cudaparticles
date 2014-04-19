@@ -1,14 +1,9 @@
 # Load CUDA using the following command
 # module load cuda
 #
-
-CUDADIR = /usr/local/cuda
-CUDAINC = -I$(CUDADIR)/include
-NVCCLIBS = -L$(CUDADIR)/lib64 -Xlinker -rpath -Xlinker /usr/local/cuda/lib64
-
-CC = $(CUDADIR)/bin/nvcc
-CFLAGS = -g -G -O3 -arch=compute_20 -code=sm_20
-NVCCFLAGS = -O3 $(CUDAINC) -arch=compute_20 -code=sm_20
+CC = nvcc
+CFLAGS = -O3 -arch=compute_30 -code=sm_30
+NVCCFLAGS = -O3 -arch=compute_30 -code=sm_30
 LIBS = 
 
 TARGETS = serial gpu autograder
@@ -18,7 +13,7 @@ all:	$(TARGETS)
 serial: serial.o common.o
 	$(CC) -o $@ $(LIBS) serial.o common.o
 gpu: gpu.o common.o
-	$(CC) $(NVCCFLAGS) -o $@ gpu.o common.o $(NVCCLIBS)
+	$(CC) -o $@ $(NVCCLIBS) gpu.o common.o
 autograder: autograder.o common.o
 	$(CC) -o $@ $(LIBS) autograder.o common.o
 
